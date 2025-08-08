@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Mini City — Click & Build</title>
+  <meta name="theme-color" content="#0ea5e9">
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#0b1220;
+      --line:#1e293b;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#0ea5e9;
+      --accent2:#22c55e;
+      --danger:#ef4444;
+      --warn:#f59e0b;
+      --r:16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      background: radial-gradient(1200px 600px at 50% -10%, #1f2937 0%, #0b1220 50%, #070b13 100%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap{max-width:1000px;margin:0 auto;padding:12px}
+    header{position:sticky;top:0;z-index:5;padding:8px 0 10px;background:linear-gradient(180deg, rgba(7,11,19,.9), rgba(7,11,19,.6) 60%, rgba(7,11,19,0));backdrop-filter: blur(6px)}
+    .title{font-weight:900;letter-spacing:-.02em;font-size:22px;margin:0}
+    .subtitle{color:var(--muted);font-size:12px;margin-top:2px}
+    .toprow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#0a1220;border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px}
+    .coins{font-size:28px;font-weight:900;display:flex;align-items:center;gap:8px}
+    .grid{display:grid;gap:12px}
+    @media (min-width: 900px){ .grid{grid-template-columns:1fr 1fr} .title{font-size:28px} .wrap{padding:20px} }
+    .card{background:linear-gradient(180deg,#0b1220,#0a101a);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+    .card .content{padding:14px}
+    @media (min-width: 900px){ .card .content{padding:20px} }
+    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+    @media (min-width:520px){ .stats{grid-template-columns:repeat(4,1fr)} }
+    .stat{background:#0b1422;border:1px solid #132033;border-radius:12px;padding:8px}
+    .stat .label{font-size:10px;color:var(--muted)}
+    .stat .value{font-weight:800;font-size:16px;margin-top:2px}
+    .tapbtn{
+      width:100%;height:46vh;min-height:220px;max-height:380px;border-radius:18px;
+      border:1px solid var(--line);background: radial-gradient(80% 120% at 50% 0%, #0e7490 0%, #0369a1 60%, #0b1220 100%);
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;font-weight:900;color:white;box-shadow:var(--shadow);cursor:pointer;
+      touch-action: manipulation;
+    }
+    .tapbtn:active{transform:scale(.99)}
+    .floatwrap{position:relative;width:100%;height:0}
+    .float{position:absolute;left:50%;transform:translateX(-50%);font-weight:900}
+    .float.anim{animation:up .9s ease forwards}
+    .crit{color:#f87171}
+    @keyframes up{0%{opacity:0;transform:translate(-50%,8px)}50%{opacity:1;transform:translate(-50%,-8px)}100%{opacity:0;transform:translate(-50%,-24px)}}
+    .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .btn{appearance:none;border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer;color:#081018}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:var(--accent);color:#001018}
+    .btn.green{background:var(--accent2)}
+    .btn.gray{background:#1f2937;color:#e5e7eb}
+    .btn.warn{background:var(--warn);}
+    .btn[disabled]{opacity:.55;filter:grayscale(1);cursor:not-allowed}
+    .shop{display:grid;grid-template-columns:1fr;gap:10px}
+    @media (min-width:400px){ .shop{grid-template-columns:repeat(2,1fr)} }
+    @media (min-width:900px){ .shop{grid-template-columns:repeat(3,1fr)} }
+    .bitem{border:1px solid var(--line);border-radius:14px;padding:12px;background:linear-gradient(180deg,#0b1220,#0a101a)}
+    .btop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .bname{font-weight:800}
+    .blevel{font-size:12px;color:var(--muted)}
+    .bdesc{font-size:12px;color:var(--muted);margin:6px 0}
+    .bnums{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+    .slider{appearance:none;width:100%;height:12px;border-radius:999px;background:#0b1422;border:1px solid #15263b;outline:none}
+    .slider::-webkit-slider-thumb{appearance:none;width:26px;height:26px;border-radius:999px;background:#22c55e;border:2px solid #052015}
+    .tiny{font-size:11px;color:var(--muted)}
+    .hint{color:var(--muted);font-size:12px}
+    .link{color:#7dd3fc;text-decoration:none}
+    .save{font-size:12px;color:#67e8f9}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="toprow">
+        <div>
+          <div class="title">Mini City — Click & Build</div>
+          <div class="subtitle" id="userInfo">Собирай ресурсы, строй здания и улучшай производство.</div>
+        </div>
+        <div class="row">
+          <span class="pill" id="saveState">💾 auto</span>
+          <button class="btn gray" id="resetBtn">Сброс</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="content">
+          <div class="coins">🪙 <span id="coins">0</span></div>
+          <div class="stats">
+            <div class="stat"><div class="label">За тап</div><div class="value" id="tpc">1</div></div>
+            <div class="stat"><div class="label">Доход/сек</div><div class="value" id="aps">0</div></div>
+            <div class="stat"><div class="label">Множитель</div><div class="value" id="mult">1.0x</div></div>
+            <div class="stat"><div class="label">Супертап шанс</div><div class="value" id="crit">5%</div></div>
+          </div>
+
+          <div style="margin-top:10px">
+            <button class="tapbtn" id="tapBtn">ДОБЫТЬ ⛏️</button>
+            <div class="floatwrap"><div id="float" class="float"></div></div>
+          </div>
+
+          <div style="margin-top:10px" class="row">
+            <button class="btn primary" id="researchBtn">Исследование +10% ко всем (⚙️ <span id="researchLvl">0</span>)</button>
+            <button class="btn green" id="boostBtn">Буст x2 на 30с (1000)</button>
+            <span class="tiny" id="boostState"></span>
+          </div>
+
+          <div style="margin-top:8px" class="hint">
+            Совет: делай апгрейды через ×10 — это быстрее. Выбери ниже, сколько покупать: <b id="buyModeLabel">×1</b>
+            <input type="range" id="buyMode" class="slider" min="1" max="3" step="1" value="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="content">
+          <div class="row" style="justify-content:space-between">
+            <div class="title" style="font-size:18px">Здания</div>
+            <div class="tiny">Формула цены: base × 1.15^уровень</div>
+          </div>
+
+          <div class="shop" id="shop"></div>
+
+          <div style="margin-top:10px" class="hint">
+            Прогресс сохраняется автоматически и учитывает офлайн‑доход. <span class="save" id="lastSave"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin:12px 0" class="tiny">
+      Сделано для запуска внутри Telegram Mini App (но работает и в обычном браузере).
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      try {
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+          const u = tg.initDataUnsafe.user;
+          document.getElementById('userInfo').textContent = `Игрок: ${u.first_name || 'Гость'} ${u.last_name || ''}`.trim();
+          tg.expand();
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', tg.themeParams && tg.themeParams.bg_color ? tg.themeParams.bg_color : '#0ea5e9');
+        }
+      } catch (e) {}
+    })();
+
+    const SKEY = 'mini_city_v1';
+    const now = ()=> Date.now();
+
+    const state = {
+      coins: 0,
+      tpcBase: 1,
+      researchLvl: 0,
+      boostLeft: 0,
+      cooldownLeft: 0,
+      lastSave: now(),
+      buildings: [
+        { id:'hut',   name:'Хижина',   desc:'+1/сек', baseCost: 50,  level:0, baseAps: 1 },
+        { id:'mine',  name:'Шахта',    desc:'+5/сек', baseCost: 250, level:0, baseAps: 5 },
+        { id:'work',  name:'Фабрика',  desc:'+20/сек', baseCost: 1200,level:0, baseAps: 20 },
+        { id:'lab',   name:'Лаборатория',desc:'+80/сек', baseCost: 5200,level:0, baseAps: 80 },
+        { id:'react', name:'Реактор',  desc:'+300/сек', baseCost: 20000,level:0, baseAps: 300 },
+      ]
+    };
+
+    const fmt = (n)=>{
+      if (!isFinite(n)) return '0';
+      const abs = Math.abs(n);
+      if (abs < 1000) return (Math.round(n*100)/100).toString();
+      const u = ['K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
+      let i=-1; while (Math.abs(n) >= 1000 && i < u.length-1){ n/=1000; i++; }
+      return (Math.round(n*100)/100) + u[i];
+    };
+    const pow = Math.pow;
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(SKEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        Object.assign(state, s);
+        const secs = Math.max(0, Math.floor((now() - (s.lastSave || now()))/1000));
+        const { aps } = derived();
+        if (secs > 0 && aps > 0) state.coins += secs * aps;
+      }catch(e){}
+    }
+    function save(){
+      try{
+        state.lastSave = now();
+        localStorage.setItem(SKEY, JSON.stringify(state));
+        document.getElementById('lastSave').textContent = 'Сохранено';
+        const el = document.getElementById('saveState'); el.textContent='💾 saved';
+        setTimeout(()=>{ el.textContent='💾 auto'; }, 800);
+      }catch(e){}
+    }
+
+    function multAll(){ return 1 + state.researchLvl * 0.10; }
+    function critChance(){ return 0.05; }
+    function critMult(){ return 3.0; }
+
+    function buildingCost(b){
+      return Math.round(b.baseCost * pow(1.15, b.level));
+    }
+    function buildingAps(b){
+      return b.baseAps * multAll();
+    }
+    function totalAps(){
+      let sum = 0;
+      for (const b of state.buildings) sum += b.level * buildingAps(b);
+      return state.boostLeft > 0 ? sum * 2 : sum;
+    }
+    function derived(){
+      const aps = totalAps();
+      const tpc = state.tpcBase * multAll() * (state.boostLeft > 0 ? 2 : 1);
+      return { aps, tpc, mult: multAll() };
+    }
+
+    const coinsEl = document.getElementById('coins');
+    const tpcEl = document.getElementById('tpc');
+    const apsEl = document.getElementById('aps');
+    const multEl = document.getElementById('mult');
+    const critEl = document.getElementById('crit');
+    const floatEl = document.getElementById('float');
+    const shopEl = document.getElementById('shop');
+    const researchBtn = document.getElementById('researchBtn');
+    const researchLvlEl = document.getElementById('researchLvl');
+    const boostBtn = document.getElementById('boostBtn');
+    const boostStateEl = document.getElementById('boostState');
+    const resetBtn = document.getElementById('resetBtn');
+    const buyMode = document.getElementById('buyMode');
+    const buyModeLabel = document.getElementById('buyModeLabel');
+
+    function refreshTop(){
+      const d = derived();
+      coinsEl.textContent = fmt(state.coins);
+      tpcEl.textContent = fmt(d.tpc);
+      apsEl.textContent = fmt(d.aps);
+      multEl.textContent = d.mult.toFixed(2)+'x';
+      critEl.textContent = Math.round(critChance()*100)+'%';
+      researchLvlEl.textContent = state.researchLvl;
+      if (state.boostLeft > 0) { boostBtn.disabled = true; boostStateEl.textContent = `Буст активен: ${state.boostLeft}s`; }
+      else if (state.cooldownLeft > 0) { boostBtn.disabled = true; boostStateEl.textContent = `КД: ${state.cooldownLeft}s`; }
+      else { boostBtn.disabled = state.coins < 1000; boostStateEl.textContent = ''; }
+      buyModeLabel.textContent = buyMode.value==='1' ? '×1' : (buyMode.value==='2' ? '×10' : '×100');
+    }
+
+    function renderShop(){
+      shopEl.innerHTML = '';
+      for (const b of state.buildings){
+        const cost = buildingCost(b);
+        const card = document.createElement('div');
+        card.className = 'bitem';
+        card.innerHTML = `
+          <div class="btop">
+            <div>
+              <div class="bname">${b.name}</div>
+              <div class="blevel">Уровень: <b>${b.level}</b></div>
+            </div>
+            <div class="row">
+              <button class="btn primary buyOne">Купить</button>
+              <button class="btn gray buyTen">×10</button>
+            </div>
+          </div>
+          <div class="bdesc">${b.desc} • Сейчас: <b>${fmt(b.level * buildingAps(b))}/сек</b></div>
+          <div class="bnums">
+            <div>Цена: <b class="cost">${fmt(cost)}</b></div>
+            <div>Прибыль/ур.: <b>${fmt(buildingAps(b))}/сек</b></div>
+          </div>
+        `;
+        const buyOne = card.querySelector('.buyOne');
+        const buyTen = card.querySelector('.buyTen');
+        function buy(n){
+          for (let i=0;i<n;i++){
+            const price = buildingCost(b);
+            if (state.coins < price) break;
+            state.coins -= price;
+            b.level += 1;
+          }
+          save(); refreshTop(); renderShop();
+        }
+        buyOne.addEventListener('click', ()=>{
+          const mode = buyMode.value;
+          if (mode==='1') buy(1);
+          else if (mode==='2') buy(10);
+          else buy(100);
+        });
+        buyTen.addEventListener('click', ()=> buy(10));
+        shopEl.appendChild(card);
+      }
+    }
+
+    function floatText(text, isCrit=false){
+      floatEl.textContent = text;
+      floatEl.className = 'float anim' + (isCrit ? ' crit' : '');
+      void floatEl.offsetWidth;
+      setTimeout(()=>{ floatEl.className = 'float'; }, 900);
+    }
+
+    document.getElementById('tapBtn').addEventListener('click', ()=>{
+      const d = derived();
+      const isCrit = Math.random() < 0.05;
+      const gain = isCrit ? d.tpc * 3 : d.tpc;
+      state.coins += gain;
+      floatText('+'+fmt(gain)+(isCrit?' CRIT!':''), isCrit);
+      save(); refreshTop();
+    });
+
+    researchBtn.addEventListener('click', ()=>{
+      const cost = Math.round(1000 * Math.pow(1.7, state.researchLvl));
+      if (state.coins < cost) { floatText('Недостаточно средств'); return; }
+      state.coins -= cost;
+      state.researchLvl += 1;
+      researchBtn.textContent = `Исследование +10% ко всем (⚙️ ${state.researchLvl})`;
+      save(); refreshTop(); renderShop();
+    });
+
+    boostBtn.addEventListener('click', ()=>{
+      if (state.boostLeft > 0 || state.cooldownLeft > 0) return;
+      const cost = 1000;
+      if (state.coins < cost) { floatText('Мало монет'); return; }
+      state.coins -= cost;
+      state.boostLeft = 30;
+      state.cooldownLeft = 90;
+      save(); refreshTop();
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      if (!confirm('Сбросить прогресс?')) return;
+      localStorage.removeItem(SKEY);
+      state.coins = 0;
+      state.tpcBase = 1;
+      state.researchLvl = 0;
+      state.boostLeft = 0;
+      state.cooldownLeft = 0;
+      for (const b of state.buildings) b.level = 0;
+      save(); refreshTop(); renderShop();
+    });
+
+    setInterval(()=>{
+      state.coins += totalAps();
+      if (state.cooldownLeft > 0) state.cooldownLeft -= 1;
+      if (state.boostLeft > 0){
+        state.boostLeft -= 1;
+        if (state.boostLeft <= 0) state.boostLeft = 0;
+      }
+      refreshTop();
+      save();
+    }, 1000);
+
+    load();
+    refreshTop();
+    renderShop();
+    researchBtn.textContent = `Исследование +10% ко всем (⚙️ ${state.researchLvl})`;
+    buyMode.addEventListener('input', refreshTop);
+    document.getElementById('lastSave').textContent = 'Автосохранение включено';
+  </script>
+</body>
+</html>
