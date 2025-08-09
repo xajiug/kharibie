@@ -50,6 +50,7 @@
     function preload() {}
 
     function create() {
+      this.input.addPointer(2);
       cam = this.cameras.main;
       cam.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
       cam.setZoom(START_ZOOM);
