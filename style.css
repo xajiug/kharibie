@@ -1,44 +1,157 @@
-* { box-sizing: border-box; }
-body { margin: 0; padding: 20px; font-family: system-ui, Arial, sans-serif; background: #f5f7fb; color: #12141a; }
-h1 { margin: 0 0 16px; font-size: 24px; }
-h2 { margin: 18px 0 10px; font-size: 18px; }
-
-section { margin-bottom: 18px; }
-button { cursor: pointer; border: 0; border-radius: 10px; padding: 10px 14px; background: #1f6fff; color: #fff; font-weight: 600; }
-button:disabled { opacity: .6; cursor: not-allowed; }
-button + button { margin-left: 8px; }
-
-.panel { background: #fff; border: 1px solid #e3e8f0; border-radius: 12px; padding: 12px; margin-top: 10px; }
-.small { font-size: 13px; color: #4b5563; }
-
-.chest-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
-@media (min-width: 540px) { .chest-row { grid-template-columns: repeat(4,1fr); } }
-
-.filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.filters button { background: #e7ecf7; color: #1b2a4a; padding: 8px 10px; }
-.filters button.active { background: #1f6fff; color: #fff; }
-
-.grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
-@media (min-width: 540px) { .grid { grid-template-columns: repeat(4,1fr); } }
-
-.card {
-  background: #fff; border: 1px solid #e3e8f0; border-radius: 12px; padding: 10px;
-  display: grid; gap: 6px; align-content: start;
-}
-.card .name { font-weight: 700; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
-.badge.common { background: #edf2f7; color: #111827; }
-.badge.rare { background: #e0e7ff; color: #1e3a8a; }
-.badge.epic { background: #f3e8ff; color: #6b21a8; }
-.badge.mythic { background: #fff7e6; color: #92400e; }
-
-.row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-.row .qty { font-size: 13px; color: #374151; }
-.row .btns { display: flex; gap: 6px; }
-.btn-light { background: #eef2ff; color: #1f2a44; }
-/* уменьшает «двоение» кликов и зум по двойному тапу */
-html, body {
-  touch-action: manipulation;
+/* ====== Базовые переменные (перекрываются из TG темой через JS) ====== */
+:root{
+  --bg: #f4f6fb;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-cta: #1e40af;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --shadow: 0 6px 20px rgba(2, 8, 23, .06);
+  --radius: 16px;
+  --gap: 14px;
+  --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
 }
 
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f19;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --primary:#60a5fa;
+    --primary-cta:#1d4ed8;
+    --card:#0f172a;
+    --border:#1f2937;
+    --shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+}
 
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font: 15px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ====== Контейнер ====== */
+.wrap{
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px 28px;
+}
+
+h1{
+  margin: 0 0 14px;
+  font-size: 26px;
+  letter-spacing: .2px;
+}
+
+/* ====== Информация об окружении ====== */
+.env{
+  display:inline-block;
+  margin: 6px 0 18px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border:1px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+}
+.env.ok{ color: #16a34a; border-color:#16a34a22; }
+.env.warn{ color:#f59e0b; border-color:#f59e0b22; }
+
+/* ====== Секции ====== */
+section{ margin-bottom: 18px; }
+
+/* ====== Кнопки ====== */
+button{
+  appearance:none;
+  border:none;
+  outline:none;
+  cursor:pointer;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 600;
+  transition: transform .05s ease, background .2s ease, box-shadow .2s ease;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37,99,235,.25);
+}
+button:active{ transform: translateY(1px) scale(.99); }
+button:disabled{ opacity:.45; cursor:not-allowed; }
+
+.free button{ background: var(--primary); }
+.free #free-left{ font-weight:700; }
+
+/* Кнопки сундуков — сетка */
+.chests{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: var(--gap);
+}
+.chests button{
+  width:100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--primary), var(--primary-cta));
+  box-shadow: 0 10px 22px rgba(37,99,235,.28);
+}
+
+/* ====== Select ====== */
+select{
+  background: var(--card);
+  color: var(--text);
+  border:1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight:600;
+  outline:none;
+  box-shadow: var(--shadow);
+}
+
+/* ====== Коллекция / карточки ====== */
+.collection{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+@media (min-width: 560px){
+  .collection{ grid-template-columns: 1fr 1fr; }
+}
+
+.card{
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+.card .title{
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+.card .rarity{
+  font-size: 12px;
+  text-transform: lowercase;
+  color: var(--muted);
+}
+
+/* Подсветка редкости */
+.card-common{ border-color:#93c5fd66; }
+.card-rare{ border-color:#a78bfa66; }
+.card-epic{ border-color:#f472b666; }
+.card-mythic{ border-color:#f59e0b66; }
+
+.empty{
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border:1px dashed var(--border);
+  color: var(--muted);
+  text-align:center;
+}
