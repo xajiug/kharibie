@@ -36,3 +36,9 @@ button + button { margin-left: 8px; }
 .row .qty { font-size: 13px; color: #374151; }
 .row .btns { display: flex; gap: 6px; }
 .btn-light { background: #eef2ff; color: #1f2a44; }
+/* уменьшает «двоение» кликов и зум по двойному тапу */
+html, body {
+  touch-action: manipulation;
+}
+
+
