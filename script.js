@@ -1,238 +1,171 @@
-/* ===============================
-   Mini App — ПОЛНЫЙ РАБОЧИЙ СКРИПТ
-   =============================== */
+// app.js
+const tg = window.Telegram?.WebApp;
 
-/** 0) Telegram init (без ошибок, если не в Telegram) */
-try { Telegram.WebApp.expand(); Telegram.WebApp.ready(); } catch {}
-// Синхронизация цветов с темой Telegram через CSS-переменные
-(function applyTgTheme(){
-  const tp = Telegram?.WebApp?.themeParams || {};
-  const set = (k, v) => v && document.documentElement.style.setProperty(k, v);
-  // Telegram отдаёт цвета, например, "#RRGGBB"
-  set('--bg', tp.bg_color);
-  set('--text', tp.text_color);
-  set('--card', tp.secondary_bg_color);
-  set('--border', tp.section_separator_color);
-  set('--primary', tp.button_color);
-  set('--primary-cta', tp.button_color); // тёмный градиент можно оставить тем же
-  set('--muted', tp.hint_color);
-  Telegram?.WebApp?.onEvent?.('themeChanged', applyTgTheme);
-})();
-
-
-/** 1) Адрес сервера (Dev URL Replit) */
-const DEFAULT_PAY_SERVER = "https://6117f804-7d7a-4ade-add6-ccd915af353b-00-3loijhr2zu3uh.kirk.replit.dev"; // ← ЗАМЕНИ без / в конце
-
-function resolvePayServer() {
-  const u = new URL(location.href);
-  const q = u.searchParams.get("api");
-  if (q) localStorage.setItem("PAY_SERVER", q.replace(/\/$/, ""));
-  return (
-    (q && q.replace(/\/$/, "")) ||
-    localStorage.getItem("PAY_SERVER") ||
-    DEFAULT_PAY_SERVER.replace(/\/$/, "")
-  );
-}
-let PAY_SERVER = resolvePayServer();
-
-/** 2) Простые утилиты */
-const PRICES = { common: 50, rare: 200, epic: 1000, mythic: 5000 };
-const RARITIES = ["common", "rare", "epic", "mythic"];
-
-function showToast(text) {
+// --- Инициализация Mini App + тема из Telegram
+function applyThemeFromTelegram() {
   try {
-    if (Telegram?.WebApp?.showPopup) {
-      Telegram.WebApp.showPopup({ title: "Сообщение", message: text, buttons: [{ type: "close" }] });
-      return;
-    }
-    if (Telegram?.WebApp?.showToast) {
-      Telegram.WebApp.showToast(text);
-      return;
-    }
-  } catch {}
-  alert(text);
+    const tp = tg?.themeParams || {};
+    // Перекладываем базовые цвета из темы Telegram (если есть) в CSS-переменные
+    if (tp.bg_color) document.documentElement.style.setProperty('--bg', `#${tp.bg_color}`);
+    if (tp.text_color) document.documentElement.style.setProperty('--fg', `#${tp.text_color}`);
+    if (tp.hint_color) document.documentElement.style.setProperty('--muted', `#${tp.hint_color}`);
+    if (tp.secondary_bg_color) document.documentElement.style.setProperty('--card', `#${tp.secondary_bg_color}`);
+    if (tp.button_color) document.documentElement.style.setProperty('--btn-primary', `#${tp.button_color}`);
+    if (tp.button_text_color) document.documentElement.style.setProperty('--btn-primary-fg', `#${tp.button_text_color}`);
+  } catch (_) {}
 }
 
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-
-/** 3) Локальное состояние */
-const LS = { COLLECTION: "app_collection_v1", FREE: "app_free_v1" };
-let collection = [];
-let free = { date: todayStr(), left: 3 };
-
-function loadState() {
-  try { collection = JSON.parse(localStorage.getItem(LS.COLLECTION)) || []; } catch { collection = []; }
+function initTelegram() {
   try {
-    free = JSON.parse(localStorage.getItem(LS.FREE)) || { date: todayStr(), left: 3 };
-    if (free.date !== todayStr()) free = { date: todayStr(), left: 3 };
-  } catch { free = { date: todayStr(), left: 3 }; }
-}
-function saveState() {
-  localStorage.setItem(LS.COLLECTION, JSON.stringify(collection));
-  localStorage.setItem(LS.FREE, JSON.stringify(free));
-}
-
-/** 4) Рендер */
-function render() {
-  const elLeft = document.querySelector("#free-left");
-  if (elLeft) elLeft.textContent = String(free.left);
-
-  const filter = document.querySelector("#filter")?.value || "all";
-  const list = collection.filter(c => (filter === "all" ? true : c.rarity === filter));
-  const root = document.querySelector("#collection");
-  if (root) {
-    root.innerHTML = list.length
-      ? list.map(c => `<div class="card card-${c.rarity}">
-          <div class="title">${c.name}</div>
-          <div class="rarity">${c.rarity}</div>
-        </div>`).join("")
-      : `<div class="empty">Пока пусто — открой сундук или возьми бесплатную.</div>`;
+    tg?.ready?.();
+    tg?.expand?.();
+    applyThemeFromTelegram();
+  } catch (e) {
+    console.warn('Telegram init warning:', e);
   }
 }
 
-/** 5) Карточки */
-function randomCard(r) {
-  const id = `${r}_${Date.now()}_${Math.floor(Math.random()*9999)}`;
-  return { id, name: `${r.toUpperCase()} #${id.slice(-4)}`, rarity: r };
+// --- Примитивное локальное хранилище (заменим на API позже)
+const store = {
+  stars: 0,              // визуальный счётчик (информативно)
+  chests: 0,
+  collection: [],
+  lastFreeAt: null
+};
+
+const els = {
+  stars: document.getElementById('stars-balance'),
+  chests: document.getElementById('chests-balance'),
+  grid: document.getElementById('collection-grid'),
+  empty: document.getElementById('empty-collection'),
+  chestPrice: document.getElementById('chest-price'),
+};
+
+function renderBalances() {
+  els.stars.textContent = String(store.stars);
+  els.chests.textContent = String(store.chests);
 }
 
-function openChestLocally(type) {
-  const table = {
-    common: ["common"],
-    rare: ["rare","common","rare"],
-    epic: ["epic","rare","epic","common"],
-    mythic: ["mythic","epic","rare"]
+function renderCollection() {
+  els.grid.innerHTML = '';
+  if (!store.collection.length) {
+    els.empty.style.display = 'block';
+    return;
+  }
+  els.empty.style.display = 'none';
+  for (const card of store.collection) {
+    const div = document.createElement('div');
+    div.className = 'card-item';
+    div.innerHTML = `
+      <div class="title">${card.name}</div>
+      <div class="rarity">${card.rarity}</div>
+    `;
+    els.grid.appendChild(div);
+  }
+}
+
+// --- Табы
+function initTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  const pages = {
+    shop: document.getElementById('tab-shop'),
+    collection: document.getElementById('tab-collection'),
   };
-  const bag = table[type] || ["common"];
-  const r = bag[Math.floor(Math.random()*bag.length)];
-  collection.push(randomCard(r));
-  saveState();
-  render();
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const key = btn.dataset.tab;
+      Object.values(pages).forEach(p => p.classList.remove('active'));
+      pages[key].classList.add('active');
+    });
+  });
 }
 
-/** 6) Логи покупок (опционально) */
-async function logPurchase(type) {
-  const user = Telegram?.WebApp?.initDataUnsafe?.user || {};
-  const body = { user_id: user.id || null, type, price: PRICES[type] || 0, currency: "XTR", ts: Date.now() };
+// --- Бесплатная карта (1 в день)
+function canGetFreeCard() {
+  if (!store.lastFreeAt) return true;
+  const last = new Date(store.lastFreeAt);
+  const now = new Date();
+  return last.toDateString() !== now.toDateString();
+}
+function giveFreeCard() {
+  const now = new Date();
+  store.lastFreeAt = now.toISOString();
+  const rarities = ['Common', 'Uncommon', 'Rare', 'Epic'];
+  const r = rarities[Math.floor(Math.random() * rarities.length)];
+  const id = Math.floor(100000 + Math.random() * 900000);
+  store.collection.push({ id, name: `Монстр #${id}`, rarity: r });
+  renderCollection();
+  tg?.HapticFeedback?.notificationOccurred?.('success');
+  tg?.showPopup?.({ title: 'Есть карта!', message: 'Бесплатная карта добавлена в коллекцию.' });
+}
+
+// --- Покупка сундука за Stars через openInvoice(link)
+async function buyChest() {
   try {
-    await fetch(`${PAY_SERVER}/api/log-purchase`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  } catch {}
-}
+    tg?.HapticFeedback?.impactOccurred?.('light');
+    const payload = `chest_${Date.now()}`;
 
-/** 7) Оплата Stars (ловим и callback, и событие invoiceClosed) */
-let invoiceListenerAttached = false;
-function attachInvoiceListenerOnce() {
-  if (invoiceListenerAttached || !Telegram?.WebApp?.onEvent) return;
-  invoiceListenerAttached = true;
-  Telegram.WebApp.onEvent("invoiceClosed", (e) => {
-    const t = window.__lastBuyType;
-    window.__lastBuyType = null;
-    if (!t) return;
-    if (e?.status === "paid") {
-      showToast("Оплата прошла ✅ Сундук открыт!");
-      openChestLocally(t);
-      logPurchase(t);
-    } else if (e?.status === "cancelled") {
-      showToast("Оплата отменена ❌");
-    } else {
-      showToast("Оплата не завершена");
+    const body = {
+      title: 'Сундук',
+      description: 'Сундук с картами',
+      amountStars: Number(els.chestPrice.textContent) || 100, // цена в звёздах
+      payload
+    };
+
+    const resp = await fetch('/api/create-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(r => r.json());
+
+    if (!resp?.ok) {
+      tg?.showAlert?.('Не удалось создать счёт');
+      return;
     }
-  });
-}
 
-async function buyChest(type) {
-  try {
-    const res = await fetch(`${PAY_SERVER}/api/create-invoice?type=${encodeURIComponent(type)}`);
-    if (!res.ok) throw new Error(`create-invoice ${res.status}`);
-    const data = await res.json();
-    if (!data.ok || !data.invoice_link) throw new Error("no invoice_link");
-
-    window.__lastBuyType = type;
-    attachInvoiceListenerOnce();
-
-    // колбэк (часть клиентов)
-    let callbackFired = false;
-    try {
-      Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
-        callbackFired = true;
-        if (status === "paid") {
-          window.__lastBuyType = null;
-          showToast("Оплата прошла ✅ Сундук открыт!");
-          openChestLocally(type);
-          logPurchase(type);
-        } else if (status === "cancelled") {
-          window.__lastBuyType = null;
-          showToast("Оплата отменена ❌");
-        }
-      });
-    } catch {}
-
-    // промис (некоторые клиенты так резолвят)
-    try { await Telegram.WebApp.openInvoice?.(data.invoice_link); } catch {}
-
-    // если ни одно не сработало — подстрахуемся событием invoiceClosed
-    setTimeout(() => { if (!callbackFired) attachInvoiceListenerOnce(); }, 0);
-  } catch (err) {
-    showToast("Ошибка оплаты. Попробуй позже.");
-  }
-}
-
-/** 8) Проверка окружения и запуск UI */
-async function checkHealthAndEnv() {
-  const envEl = document.querySelector("#env");
-  const inTg = Boolean(window.Telegram && Telegram.WebApp && Telegram.WebApp.initData);
-  // пингуем сервер, но НЕ блокируем UI, даже если он недоступен
-  let serverOk = false;
-  try {
-    const r = await fetch(`${PAY_SERVER}/api/health`, { cache: "no-store" });
-    const j = await r.json();
-    serverOk = Boolean(j?.success);
-  } catch {}
-  // выводим статус и разрешаем кнопки
-  if (envEl) {
-    envEl.textContent = `Окружение: ${inTg ? "Telegram" : "Браузер"} • Сервер: ${serverOk ? "OK" : "недоступен"}`;
-    envEl.className = "env " + (serverOk ? "ok" : "warn");
-  }
-}
-
-/** 9) ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ЗАГРУЗКИ DOM */
-document.addEventListener("DOMContentLoaded", () => {
-  loadState();
-  render();
-
-  // бесплатная карта
-  const btnFree = document.querySelector("#btn-free");
-  if (btnFree) {
-    btnFree.addEventListener("click", () => {
-      if (free.left <= 0) return showToast("Лимит бесплатных карт на сегодня исчерпан");
-      collection.push(randomCard("common"));
-      free.left -= 1;
-      saveState();
-      render();
-      showToast("Бесплатная карта добавлена 🎉");
+    const link = resp.link;
+    window.Telegram.WebApp.openInvoice(link, (status) => {
+      // status: "paid" | "cancelled" | "failed"
+      if (status === 'paid') {
+        tg?.showPopup?.({
+          title: 'Оплачено',
+          message: 'Платёж подтверждён, синхронизируем…'
+        });
+      } else if (status === 'cancelled') {
+        // Пользователь закрыл окно — это нормально. Ничего не делаем.
+      } else if (status === 'failed') {
+        tg?.showAlert?.('Платёж не прошёл');
+      }
     });
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert?.('Ошибка при оплате');
   }
+}
 
-  // фильтр
-  const sel = document.querySelector("#filter");
-  if (sel) sel.addEventListener("change", render);
-
-  // сундуки
-  document.querySelectorAll("[data-chest]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const type = btn.getAttribute("data-chest");
-      if (!PRICES[type]) return;
-      buyChest(type);
-    });
+// --- Навешиваем обработчики
+function bindHandlers() {
+  document.getElementById('btn-free')?.addEventListener('click', () => {
+    if (!canGetFreeCard()) {
+      tg?.showAlert?.('Сегодня бесплатная карта уже получена.');
+      return;
+    }
+    giveFreeCard();
   });
 
-  // проверка окружения (обновляет текст «идет проверка окружения»)
-  checkHealthAndEnv();
+  document.getElementById('buy-chest-btn')?.addEventListener('click', buyChest);
+}
 
-  // слушатель invoiceClosed
-  attachInvoiceListenerOnce();
-});
+// --- Старт
+(function start() {
+  initTelegram();
+  initTabs();
+  renderBalances();
+  renderCollection();
+  bindHandlers();
 
+  // Пример: звёзды неизвестны на клиенте (их даёт Telegram), поэтому отображаем 0/–.
+  // Когда подключим бэкенд с /api/me, подставим реальные значения.
+})();
