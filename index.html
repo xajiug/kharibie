@@ -1,66 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <!-- Встроенный WebView Telegram любит такой viewport (отключаем масштабирование и двойной тап-зум) -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Monster Cards</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini App</title>
 
-  <!-- Стили -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ОБЯЗАТЕЛЬНО: официальный скрипт Telegram WebApp API (должен быть подключён ДО вашего script.js) -->
+  <!-- официальный SDK Telegram -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- наш скрипт игры. ВАЖНО: defer -->
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <h1>🃏 Monster Cards</h1>
+  <div class="wrap">
+    <h1>Карточки</h1>
 
-  <!-- 🔧 Панель диагностики окружения (показывает, видит ли приложение Telegram-WebApp) -->
-  <div id="debug" class="panel small">Идёт проверка окружения…</div>
+    <div id="env" class="env">идет проверка окружения…</div>
 
-  <!-- Ежедневные бесплатные карты -->
-  <section id="daily">
-    <h2>🎁 Ежедневные карты</h2>
-    <p>Осталось бесплатных открытий сегодня: <b id="cardsLeft">3</b></p>
-    <button id="openCardBtn">Открыть бесплатную карту</button>
-    <div id="cardResult" class="panel"></div>
-  </section>
+    <section class="free">
+      <div>Бесплатные карты на сегодня: <span id="free-left">3</span></div>
+      <button id="btn-free">Получить бесплатную</button>
+    </section>
 
-  <!-- Сундуки за Stars -->
-  <section id="chests">
-    <h2>💎 Сундуки за Stars</h2>
-    <div class="chest-row">
-      <button data-chest="common">Обычный — 1⭐</button>
-      <button data-chest="rare">Редкий — 200⭐</button>
-      <button data-chest="epic">Эпический — 1000⭐</button>
-      <button data-chest="mythic">Мифический — 5000⭐</button>
-    </div>
-    <div id="chestResult" class="panel"></div>
-  </section>
+    <section class="controls">
+      <label>Фильтр:
+        <select id="filter">
+          <option value="all">Все</option>
+          <option value="common">Common</option>
+          <option value="rare">Rare</option>
+          <option value="epic">Epic</option>
+          <option value="mythic">Mythic</option>
+        </select>
+      </label>
+    </section>
 
-  <!-- Коллекция -->
-  <section id="collection">
-    <h2>📚 Коллекция</h2>
-    <div id="filters" class="filters">
-      <button data-filter="all" class="active">Все</button>
-      <button data-filter="common">Обычные</button>
-      <button data-filter="rare">Редкие</button>
-      <button data-filter="epic">Эпические</button>
-      <button data-filter="mythic">Мифические</button>
-    </div>
-    <div id="collectionList" class="grid"></div>
-  </section>
+    <section class="chests">
+      <button data-chest="common">Обычный (50⭐)</button>
+      <button data-chest="rare">Редкий (200⭐)</button>
+      <button data-chest="epic">Эпический (1000⭐)</button>
+      <button data-chest="mythic">Мифический (5000⭐)</button>
+    </section>
 
-  <!-- Апгрейд дублей -->
-  <section id="upgrade">
-    <h2>⬆️ Апгрейд (10 одинаковых → 1 выше)</h2>
-    <p class="hint">Нажми «Апгрейд» у карты, если у тебя есть 10 шт. этой карты.</p>
-    <div id="upgradeInfo" class="panel small"></div>
-  </section>
-
-  <!-- Логика игры -->
-  <script src="script.js"></script>
+    <section>
+      <div id="collection" class="collection"></div>
+    </section>
+  </div>
 </body>
 </html>
-
-
