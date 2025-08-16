@@ -1,4 +1,10 @@
-/***** ДАННЫЕ И НАСТРОЙКИ *****/
+/***** === Telegram WebApp init === *****/
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+if (tg && tg.ready) tg.ready();
+if (tg && tg.expand) tg.expand();
+const isInTelegram = !!tg && /Telegram/i.test(navigator.userAgent);
+
+/***** === ДАННЫЕ И НАСТРОЙКИ === *****/
 const RARITIES = ["common", "rare", "epic", "mythic"];
 const POOLS = {
   common: ["Goblin", "Slime", "Bat", "Rat", "Imp"],
@@ -9,36 +15,35 @@ const POOLS = {
 
 // Шансы сундуков
 const CHEST_ODDS = {
-  common:  { common: 0.80, rare: 0.20, epic: 0.00, mythic: 0.00 },   // 50⭐
-  rare:    { common: 0.00, rare: 0.60, epic: 0.40, mythic: 0.00 },   // 100⭐
-  epic:    { common: 0.00, rare: 0.00, epic: 0.70, mythic: 0.30 },   // 500⭐
-  mythic:  { common: 0.00, rare: 0.00, epic: 0.00, mythic: 1.00 }    // 1000⭐
+  common:  { common: 0.80, rare: 0.20, epic: 0.00, mythic: 0.00 },
+  rare:    { common: 0.00, rare: 0.60, epic: 0.40, mythic: 0.00 },
+  epic:    { common: 0.00, rare: 0.00, epic: 0.70, mythic: 0.30 },
+  mythic:  { common: 0.00, rare: 0.00, epic: 0.00, mythic: 1.00 }
 };
 
-// Ежедневные бесплатные открытия
+// Бесплатные карты
 const DAILY_FREE = 3;
 
 // Хранилище
 const LS_KEY = "mc_save_v1";
 
-/***** СОСТОЯНИЕ *****/
+/***** === СОСТОЯНИЕ === *****/
 let state = loadState();
 
-/***** ХЕЛПЕРЫ *****/
+/***** === ХЕЛПЕРЫ === *****/
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
 function loadState() {
   let s = {
     date: todayStr(),
     freeLeft: DAILY_FREE,
-    collection: {}, // { "Goblin": { rarity:'common', qty: 1 } }
+    collection: {},
     filter: "all"
   };
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) s = { ...s, ...JSON.parse(raw) };
   } catch {}
-  // Сброс бесплатных по дате
   if (s.date !== todayStr()) {
     s.date = todayStr();
     s.freeLeft = DAILY_FREE;
@@ -58,8 +63,7 @@ function rollRarityByChest(type) {
   const r = Math.random();
   let acc = 0;
   for (const rar of RARITIES) {
-    const p = odds[rar] || 0;
-    acc += p;
+    acc += odds[rar] || 0;
     if (r <= acc) return rar;
   }
   return "common";
@@ -72,7 +76,7 @@ function addCardToCollection(name, rarity) {
   renderCollection();
 }
 
-/***** ЛОГИКА ВЫПАДЕНИЯ *****/
+/***** === ВЫПАДЕНИЕ КАРТ === *****/
 function randomCardByRarity(rarity) {
   const pool = POOLS[rarity];
   const name = pick(pool);
@@ -80,18 +84,15 @@ function randomCardByRarity(rarity) {
   return { name, rarity };
 }
 
-// Бесплатная карта (для простоты — в основном common, с маленьким шансом редкости)
 function openFreeCard() {
   if (state.freeLeft <= 0) {
-    notify("На сегодня лимит бесплатных карточек исчерпан!");
+    notify("На сегодня лимит бесплатных карт исчерпан!");
     return;
   }
   state.freeLeft--;
   saveState();
   updateFreeLeft();
 
-  // базовые шансы для бесплатной
-  // (можно потом подкрутить)
   const r = Math.random();
   let rarity = "common";
   if (r < 0.02) rarity = "mythic";
@@ -102,80 +103,56 @@ function openFreeCard() {
   showResult("cardResult", `Выпала карта: <b>${c.name}</b> <span class="badge ${c.rarity}">${c.rarity}</span>`);
 }
 
-// Сундук
 function openChest(type) {
   const rarity = rollRarityByChest(type);
   const c = randomCardByRarity(rarity);
   showResult("chestResult", `Из сундука выпала: <b>${c.name}</b> <span class="badge ${c.rarity}">${c.rarity}</span>`);
 }
 
-/***** АПГРЕЙД 10 → 1 ВЫШЕ *****/
+/***** === АПГРЕЙД === *****/
 function canUpgrade(name) {
   const card = state.collection[name];
   if (!card) return false;
   if (card.qty < 10) return false;
-  const r = card.rarity;
-  return r !== "mythic"; // мифик апнуть не во что
+  return card.rarity !== "mythic";
 }
 
 function upgrade(name) {
   if (!canUpgrade(name)) {
-    notify("Для апгрейда нужно 10 одинаковых карт и редкость ниже мифической.");
+    notify("Для апгрейда нужно 10 одинаковых карт (и не мифик).");
     return;
   }
   const { rarity } = state.collection[name];
-  state.collection[name].qty -= 10; // «сжигаем» 10
-  // Следующая редкость
-  const nextR = {
-    common: "rare",
-    rare: "epic",
-    epic: "mythic"
-  }[rarity] || "mythic";
+  state.collection[name].qty -= 10;
 
+  const nextR = { common:"rare", rare:"epic", epic:"mythic" }[rarity] || "mythic";
   const newCardName = pick(POOLS[nextR]);
   addCardToCollection(newCardName, nextR);
   saveState();
   renderCollection();
-  showResult(
-    "upgradeInfo",
-    `Апгрейд: 10× <b>${name}</b> (${rarity}) → новая карта <b>${newCardName}</b> <span class="badge ${nextR}">${nextR}</span>`
-  );
+  showResult("upgradeInfo", `Апгрейд: 10× ${rarity} → новая карта <b>${newCardName}</b> (${nextR})`);
 }
 
-/***** РЕНДЕР *****/
+/***** === РЕНДЕР === *****/
 function rarityLabel(r) {
-  return {
-    common: "Обычная",
-    rare: "Редкая",
-    epic: "Эпическая",
-    mythic: "Мифическая"
-  }[r] || r;
+  return { common:"Обычная", rare:"Редкая", epic:"Эпическая", mythic:"Мифическая" }[r] || r;
 }
-
 function updateFreeLeft() {
   document.getElementById("cardsLeft").textContent = state.freeLeft;
 }
-
 function showResult(id, html) {
-  const el = document.getElementById(id);
-  el.innerHTML = html;
+  document.getElementById(id).innerHTML = html;
 }
-
-function notify(text) {
-  alert(text);
-}
+function notify(text) { alert(text); }
 
 function renderCollection() {
   const list = document.getElementById("collectionList");
   const filter = state.filter;
-  // Собрать все карты в список
-  const entries = Object.entries(state.collection)
-    .sort((a,b) => a[0].localeCompare(b[0]));
+  const entries = Object.entries(state.collection).sort((a,b)=>a[0].localeCompare(b[0]));
 
-  let html = "";
-  for (const [name, data] of entries) {
-    if (filter !== "all" && data.rarity !== filter) continue;
-    html += `
+  list.innerHTML = entries.map(([name,data])=>{
+    if (filter!=="all" && data.rarity!==filter) return "";
+    return `
       <div class="card">
         <div class="name">${name}</div>
         <div class="row">
@@ -185,40 +162,48 @@ function renderCollection() {
         <div class="row">
           <div class="btns">
             <button class="btn-light" onclick="destroyCard('${name}')">Уничтожить 1</button>
-            <button onclick="upgrade('${name}')" ${canUpgrade(name) ? "" : "disabled"}>Апгрейд (10→1)</button>
+            <button onclick="upgrade('${name}')" ${canUpgrade(name)?"":"disabled"}>Апгрейд (10→1)</button>
           </div>
         </div>
-      </div>
-    `;
-  }
-  list.innerHTML = html;
+      </div>`;
+  }).join("");
 }
 
 function destroyCard(name) {
   const card = state.collection[name];
   if (!card) return;
-  if (card.qty <= 0) return;
   card.qty--;
-  if (card.qty === 0) delete state.collection[name];
+  if (card.qty<=0) delete state.collection[name];
   saveState();
   renderCollection();
 }
 
-/***** СЛУШАТЕЛИ *****/
+/***** === СЛУШАТЕЛИ === *****/
 document.getElementById("openCardBtn").addEventListener("click", openFreeCard);
 
-// сундуки
-document.querySelectorAll("#chests button[data-chest]").forEach(btn => {
-  btn.addEventListener("click", () => {
+// сундуки (с анти-двоением и sendData)
+document.querySelectorAll("#chests button[data-chest]").forEach(btn=>{
+  let lastClick = 0;
+  btn.addEventListener("click",(e)=>{
+    const now = Date.now();
+    if (now - lastClick < 350) { e.preventDefault(); return; }
+    lastClick = now;
+
     const type = btn.getAttribute("data-chest");
-    openChest(type);
-  });
+
+    if (isInTelegram && tg && typeof tg.sendData==="function") {
+      tg.sendData(`BUY_CHEST_${type.toUpperCase()}`);
+      showResult("chestResult","Открой чат с ботом: он пришлёт счёт на оплату Stars.");
+    } else {
+      openChest(type); // демо
+    }
+  }, { passive:false });
 });
 
 // фильтры
-document.querySelectorAll("#filters button[data-filter]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll("#filters button").forEach(b => b.classList.remove("active"));
+document.querySelectorAll("#filters button[data-filter]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("#filters button").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
     state.filter = btn.getAttribute("data-filter");
     saveState();
@@ -226,7 +211,15 @@ document.querySelectorAll("#filters button[data-filter]").forEach(btn => {
   });
 });
 
-/***** СТАРТ *****/
+// убираем зум по двойному тапу
+let lastTouchEnd=0;
+document.addEventListener('touchend',function(e){
+  const now=Date.now();
+  if(now-lastTouchEnd<=300){ e.preventDefault(); }
+  lastTouchEnd=now;
+},{passive:false});
+
+/***** === СТАРТ === *****/
 updateFreeLeft();
 renderCollection();
-showResult("upgradeInfo", "Подсказка: если у карты ≥10 копий — кнопка «Апгрейд» станет активной.");
+showResult("upgradeInfo","Подсказка: если у карты ≥10 копий — кнопка «Апгрейд» станет активной.");
