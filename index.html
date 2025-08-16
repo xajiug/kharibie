@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monster Cards</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🃏 Monster Cards</h1>
+
+  <section id="daily">
+    <h2>🎁 Ежедневные карты</h2>
+    <p>Осталось бесплатных открытий сегодня: <b id="cardsLeft">3</b></p>
+    <button id="openCardBtn">Открыть бесплатную карту</button>
+    <div id="cardResult" class="panel"></div>
+  </section>
+
+  <section id="chests">
+    <h2>💎 Сундуки за Stars (демо без оплаты)</h2>
+    <div class="chest-row">
+      <button data-chest="common">Обычный — 50⭐</button>
+      <button data-chest="rare">Редкий — 100⭐</button>
+      <button data-chest="epic">Эпический — 500⭐</button>
+      <button data-chest="mythic">Мифический — 1000⭐</button>
+    </div>
+    <div id="chestResult" class="panel"></div>
+  </section>
+
+  <section id="collection">
+    <h2>📚 Коллекция</h2>
+    <div id="filters" class="filters">
+      <button data-filter="all" class="active">Все</button>
+      <button data-filter="common">Обычные</button>
+      <button data-filter="rare">Редкие</button>
+      <button data-filter="epic">Эпические</button>
+      <button data-filter="mythic">Мифические</button>
+    </div>
+    <div id="collectionList" class="grid"></div>
+  </section>
+
+  <section id="upgrade">
+    <h2>⬆️ Апгрейд (10 одинаковых → 1 выше)</h2>
+    <p class="hint">Нажми «Апгрейд» у карты, если у тебя есть 10 шт. этой карты.</p>
+    <div id="upgradeInfo" class="panel small"></div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
