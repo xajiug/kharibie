@@ -7,7 +7,7 @@ window.Telegram?.WebApp?.expand?.();
 window.Telegram?.WebApp?.ready?.();
 
 /** 1) Гибкая подстановка адреса сервера оплаты */
-const DEFAULT_PAY_SERVER = "https://YOUR-DEV-URL.kirk.replit.dev"; // ← замени на актуальный Dev URL (без / в конце)
+const DEFAULT_PAY_SERVER = "https://6117f804-7d7a-4ade-add6-ccd915af353b-00-3loijhr2zu3uh.kirk.replit.dev"; // ← замени на актуальный Dev URL (без / в конце)
 
 function resolvePayServer() {
   const url = new URL(window.location.href);
@@ -251,3 +251,4 @@ renderCollection();
 renderFreeLeft();
 
 /* ===== Конец файла ===== */
+
