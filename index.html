@@ -2,17 +2,23 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <!-- важно: отключаем зум и дайбл-тап -->
+  <!-- Встроенный WebView Telegram любит такой viewport (отключаем масштабирование и двойной тап-зум) -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Monster Cards</title>
+
+  <!-- Стили -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- ОБЯЗАТЕЛЬНО: официальный скрипт Telegram WebApp API (должен быть подключён ДО вашего script.js) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
   <h1>🃏 Monster Cards</h1>
 
-  <!-- 🔧 Диагностика окружения -->
+  <!-- 🔧 Панель диагностики окружения (показывает, видит ли приложение Telegram-WebApp) -->
   <div id="debug" class="panel small">Идёт проверка окружения…</div>
 
+  <!-- Ежедневные бесплатные карты -->
   <section id="daily">
     <h2>🎁 Ежедневные карты</h2>
     <p>Осталось бесплатных открытий сегодня: <b id="cardsLeft">3</b></p>
@@ -20,6 +26,7 @@
     <div id="cardResult" class="panel"></div>
   </section>
 
+  <!-- Сундуки за Stars -->
   <section id="chests">
     <h2>💎 Сундуки за Stars</h2>
     <div class="chest-row">
@@ -31,6 +38,7 @@
     <div id="chestResult" class="panel"></div>
   </section>
 
+  <!-- Коллекция -->
   <section id="collection">
     <h2>📚 Коллекция</h2>
     <div id="filters" class="filters">
@@ -43,12 +51,14 @@
     <div id="collectionList" class="grid"></div>
   </section>
 
+  <!-- Апгрейд дублей -->
   <section id="upgrade">
     <h2>⬆️ Апгрейд (10 одинаковых → 1 выше)</h2>
     <p class="hint">Нажми «Апгрейд» у карты, если у тебя есть 10 шт. этой карты.</p>
     <div id="upgradeInfo" class="panel small"></div>
   </section>
 
+  <!-- Логика игры -->
   <script src="script.js"></script>
 </body>
 </html>
