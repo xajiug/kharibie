@@ -2,51 +2,72 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mini App</title>
-
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- официальный SDK Telegram -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- наш скрипт игры. ВАЖНО: defer -->
-  <script src="script.js" defer></script>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+  <title>Monsterio</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="wrap">
-    <h1>Карточки</h1>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">👾</div>
+        <div class="titles">
+          <h1>Monsterio</h1>
+          <p class="subtitle">Коллекционные карточки</p>
+        </div>
+      </div>
+      <div class="balances">
+        <div class="balance">
+          <span class="label">Звёзды</span>
+          <span id="stars-balance" class="value">–</span>
+        </div>
+        <div class="balance">
+          <span class="label">Сундуки</span>
+          <span id="chests-balance" class="value">0</span>
+        </div>
+      </div>
+    </header>
 
-    <div id="env" class="env">идет проверка окружения…</div>
+    <main class="content">
+      <section class="tabs">
+        <button class="tab active" data-tab="shop">Магазин</button>
+        <button class="tab" data-tab="collection">Моя коллекция</button>
+      </section>
 
-    <section class="free">
-      <div>Бесплатные карты на сегодня: <span id="free-left">3</span></div>
-      <button id="btn-free">Получить бесплатную</button>
-    </section>
+      <!-- Магазин -->
+      <section id="tab-shop" class="tab-page active">
+        <div class="card">
+          <h2>Бесплатная карта</h2>
+          <p class="muted">1 раз в день. Добавится в коллекцию.</p>
+          <button id="btn-free" class="btn">Получить</button>
+        </div>
 
-    <section class="controls">
-      <label>Фильтр:
-        <select id="filter">
-          <option value="all">Все</option>
-          <option value="common">Common</option>
-          <option value="rare">Rare</option>
-          <option value="epic">Epic</option>
-          <option value="mythic">Mythic</option>
-        </select>
-      </label>
-    </section>
+        <div class="card">
+          <h2>Сундук с картами</h2>
+          <p class="muted">Откроется после оплаты звёздами.</p>
+          <div class="row">
+            <div class="price">Цена: <strong><span id="chest-price">100</span> ⭐</strong></div>
+            <button id="buy-chest-btn" class="btn primary">Купить сундук</button>
+          </div>
+        </div>
+      </section>
 
-    <section class="chests">
-      <button data-chest="common">Обычный (1⭐)</button>
-      <button data-chest="rare">Редкий (200⭐)</button>
-      <button data-chest="epic">Эпический (1000⭐)</button>
-      <button data-chest="mythic">Мифический (5000⭐)</button>
-    </section>
-
-    <section>
-      <div id="collection" class="collection"></div>
-    </section>
+      <!-- Коллекция -->
+      <section id="tab-collection" class="tab-page">
+        <div id="collection-grid" class="grid"></div>
+        <p id="empty-collection" class="muted center">Пока пусто. Получи бесплатную карту или купи сундук.</p>
+      </section>
+    </main>
   </div>
+
+  <!-- Telegram Mini App SDK подгружается из клиента Telegram, но на всякий случай: -->
+  <script>
+    // Если открываешь локально в браузере, закомментируй следующую строку.
+    window.Telegram = window.Telegram || {};
+  </script>
+  <script src="./app.js" type="module"></script>
 </body>
 </html>
-
