@@ -4,6 +4,21 @@
 
 /** 0) Telegram init (без ошибок, если не в Telegram) */
 try { Telegram.WebApp.expand(); Telegram.WebApp.ready(); } catch {}
+// Синхронизация цветов с темой Telegram через CSS-переменные
+(function applyTgTheme(){
+  const tp = Telegram?.WebApp?.themeParams || {};
+  const set = (k, v) => v && document.documentElement.style.setProperty(k, v);
+  // Telegram отдаёт цвета, например, "#RRGGBB"
+  set('--bg', tp.bg_color);
+  set('--text', tp.text_color);
+  set('--card', tp.secondary_bg_color);
+  set('--border', tp.section_separator_color);
+  set('--primary', tp.button_color);
+  set('--primary-cta', tp.button_color); // тёмный градиент можно оставить тем же
+  set('--muted', tp.hint_color);
+  Telegram?.WebApp?.onEvent?.('themeChanged', applyTgTheme);
+})();
+
 
 /** 1) Адрес сервера (Dev URL Replit) */
 const DEFAULT_PAY_SERVER = "https://6117f804-7d7a-4ade-add6-ccd915af353b-00-3loijhr2zu3uh.kirk.replit.dev"; // ← ЗАМЕНИ без / в конце
@@ -220,3 +235,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // слушатель invoiceClosed
   attachInvoiceListenerOnce();
 });
+
