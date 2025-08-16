@@ -2,12 +2,16 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <!-- важно: отключаем зум и дайбл-тап -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Monster Cards</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>🃏 Monster Cards</h1>
+
+  <!-- 🔧 Диагностика окружения -->
+  <div id="debug" class="panel small">Идёт проверка окружения…</div>
 
   <section id="daily">
     <h2>🎁 Ежедневные карты</h2>
@@ -17,7 +21,7 @@
   </section>
 
   <section id="chests">
-    <h2>💎 Сундуки за Stars (демо без оплаты)</h2>
+    <h2>💎 Сундуки за Stars</h2>
     <div class="chest-row">
       <button data-chest="common">Обычный — 50⭐</button>
       <button data-chest="rare">Редкий — 100⭐</button>
@@ -48,4 +52,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
