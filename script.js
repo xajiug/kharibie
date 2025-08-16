@@ -1,8 +1,25 @@
-/***** === Telegram WebApp init === *****/
+/***** === Telegram WebApp init + диагностика === *****/
 const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 if (tg && tg.ready) tg.ready();
 if (tg && tg.expand) tg.expand();
-const isInTelegram = !!tg && /Telegram/i.test(navigator.userAgent);
+
+// считаем, что мы «в Телеграме», если есть объект WebApp
+const isInTelegram = !!tg;
+const canSendData = !!(tg && typeof tg.sendData === "function");
+
+function setDebug(msg) {
+  const el = document.getElementById("debug");
+  if (!el) return;
+  el.innerHTML = msg;
+}
+
+// покажем статус окружения крупно и явно
+setDebug(
+  `<b>Статус окружения</b><br>
+  isInTelegram: <b>${isInTelegram}</b><br>
+  sendData доступен: <b>${canSendData}</b><br>
+  userAgent: ${navigator.userAgent}`
+);
 
 /***** === ДАННЫЕ И НАСТРОЙКИ === *****/
 const RARITIES = ["common", "rare", "epic", "mythic"];
@@ -13,7 +30,7 @@ const POOLS = {
   mythic: ["Phoenix", "Leviathan", "Titan"]
 };
 
-// Шансы сундуков
+// Шансы сундуков (можно настроить позже)
 const CHEST_ODDS = {
   common:  { common: 0.80, rare: 0.20, epic: 0.00, mythic: 0.00 },
   rare:    { common: 0.00, rare: 0.60, epic: 0.40, mythic: 0.00 },
@@ -21,10 +38,7 @@ const CHEST_ODDS = {
   mythic:  { common: 0.00, rare: 0.00, epic: 0.00, mythic: 1.00 }
 };
 
-// Бесплатные карты
 const DAILY_FREE = 3;
-
-// Хранилище
 const LS_KEY = "mc_save_v1";
 
 /***** === СОСТОЯНИЕ === *****/
@@ -34,38 +48,22 @@ let state = loadState();
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
 function loadState() {
-  let s = {
-    date: todayStr(),
-    freeLeft: DAILY_FREE,
-    collection: {},
-    filter: "all"
-  };
+  let s = { date: todayStr(), freeLeft: DAILY_FREE, collection: {}, filter: "all" };
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) s = { ...s, ...JSON.parse(raw) };
   } catch {}
-  if (s.date !== todayStr()) {
-    s.date = todayStr();
-    s.freeLeft = DAILY_FREE;
-  }
+  if (s.date !== todayStr()) { s.date = todayStr(); s.freeLeft = DAILY_FREE; }
   saveState(s);
   return s;
 }
-
-function saveState(s = state) {
-  localStorage.setItem(LS_KEY, JSON.stringify(s));
-}
-
+function saveState(s = state) { localStorage.setItem(LS_KEY, JSON.stringify(s)); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function rollRarityByChest(type) {
-  const odds = CHEST_ODDS[type];
-  const r = Math.random();
+  const odds = CHEST_ODDS[type], r = Math.random();
   let acc = 0;
-  for (const rar of RARITIES) {
-    acc += odds[rar] || 0;
-    if (r <= acc) return rar;
-  }
+  for (const rar of RARITIES) { acc += odds[rar] || 0; if (r <= acc) return rar; }
   return "common";
 }
 
@@ -85,13 +83,8 @@ function randomCardByRarity(rarity) {
 }
 
 function openFreeCard() {
-  if (state.freeLeft <= 0) {
-    notify("На сегодня лимит бесплатных карт исчерпан!");
-    return;
-  }
-  state.freeLeft--;
-  saveState();
-  updateFreeLeft();
+  if (state.freeLeft <= 0) { return notify("На сегодня лимит бесплатных карт исчерпан!"); }
+  state.freeLeft--; saveState(); updateFreeLeft();
 
   const r = Math.random();
   let rarity = "common";
@@ -109,47 +102,32 @@ function openChest(type) {
   showResult("chestResult", `Из сундука выпала: <b>${c.name}</b> <span class="badge ${c.rarity}">${c.rarity}</span>`);
 }
 
-/***** === АПГРЕЙД === *****/
+/***** === АПГРЕЙД 10 → 1 ВЫШЕ === *****/
 function canUpgrade(name) {
   const card = state.collection[name];
-  if (!card) return false;
-  if (card.qty < 10) return false;
-  return card.rarity !== "mythic";
+  return !!(card && card.qty >= 10 && card.rarity !== "mythic");
 }
-
 function upgrade(name) {
-  if (!canUpgrade(name)) {
-    notify("Для апгрейда нужно 10 одинаковых карт (и не мифик).");
-    return;
-  }
+  if (!canUpgrade(name)) return notify("Нужно ≥10 одинаковых карт (и не мифик).");
   const { rarity } = state.collection[name];
   state.collection[name].qty -= 10;
-
   const nextR = { common:"rare", rare:"epic", epic:"mythic" }[rarity] || "mythic";
   const newCardName = pick(POOLS[nextR]);
   addCardToCollection(newCardName, nextR);
-  saveState();
-  renderCollection();
-  showResult("upgradeInfo", `Апгрейд: 10× ${rarity} → новая карта <b>${newCardName}</b> (${nextR})`);
+  saveState(); renderCollection();
+  showResult("upgradeInfo", `Апгрейд: 10× ${rarity} → <b>${newCardName}</b> <span class="badge ${nextR}">${nextR}</span>`);
 }
 
 /***** === РЕНДЕР === *****/
-function rarityLabel(r) {
-  return { common:"Обычная", rare:"Редкая", epic:"Эпическая", mythic:"Мифическая" }[r] || r;
-}
-function updateFreeLeft() {
-  document.getElementById("cardsLeft").textContent = state.freeLeft;
-}
-function showResult(id, html) {
-  document.getElementById(id).innerHTML = html;
-}
-function notify(text) { alert(text); }
+function rarityLabel(r){ return {common:"Обычная",rare:"Редкая",epic:"Эпическая",mythic:"Мифическая"}[r]||r; }
+function updateFreeLeft(){ document.getElementById("cardsLeft").textContent = state.freeLeft; }
+function showResult(id, html){ const el=document.getElementById(id); if (el) el.innerHTML = html; }
+function notify(text){ alert(text); }
 
 function renderCollection() {
   const list = document.getElementById("collectionList");
   const filter = state.filter;
   const entries = Object.entries(state.collection).sort((a,b)=>a[0].localeCompare(b[0]));
-
   list.innerHTML = entries.map(([name,data])=>{
     if (filter!=="all" && data.rarity!==filter) return "";
     return `
@@ -169,49 +147,50 @@ function renderCollection() {
   }).join("");
 }
 
-function destroyCard(name) {
+function destroyCard(name){
   const card = state.collection[name];
   if (!card) return;
-  card.qty--;
-  if (card.qty<=0) delete state.collection[name];
-  saveState();
-  renderCollection();
+  card.qty--; if (card.qty<=0) delete state.collection[name];
+  saveState(); renderCollection();
 }
 
 /***** === СЛУШАТЕЛИ === *****/
+// Бесплатная карта
 document.getElementById("openCardBtn").addEventListener("click", openFreeCard);
 
-// сундуки (с анти-двоением и sendData)
+// Сундуки: в Telegram -> sendData, в браузере -> демо
 document.querySelectorAll("#chests button[data-chest]").forEach(btn=>{
   let lastClick = 0;
   btn.addEventListener("click",(e)=>{
     const now = Date.now();
-    if (now - lastClick < 350) { e.preventDefault(); return; }
+    if (now - lastClick < 350) { e.preventDefault(); return; } // анти-двойной тап
     lastClick = now;
 
     const type = btn.getAttribute("data-chest");
 
-    if (isInTelegram && tg && typeof tg.sendData==="function") {
+    if (isInTelegram && canSendData) {
       tg.sendData(`BUY_CHEST_${type.toUpperCase()}`);
-      showResult("chestResult","Открой чат с ботом: он пришлёт счёт на оплату Stars.");
+      showResult("chestResult","📨 Сигнал отправлен боту. Открой чат: бот пришлёт счёт в Stars.");
+      setDebug(`<b>Статус окружения</b><br>isInTelegram: <b>${isInTelegram}</b><br>sendData доступен: <b>${canSendData}</b><br>Отправлено: BUY_CHEST_${type.toUpperCase()}`);
     } else {
-      openChest(type); // демо
+      // демо-режим
+      openChest(type);
+      setDebug(`<b>Статус окружения</b><br>isInTelegram: <b>${isInTelegram}</b><br>sendData доступен: <b>${canSendData}</b><br>Демо-режим: открыт сундук ${type}`);
     }
   }, { passive:false });
 });
 
-// фильтры
+// Фильтры
 document.querySelectorAll("#filters button[data-filter]").forEach(btn=>{
   btn.addEventListener("click",()=>{
     document.querySelectorAll("#filters button").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
     state.filter = btn.getAttribute("data-filter");
-    saveState();
-    renderCollection();
+    saveState(); renderCollection();
   });
 });
 
-// убираем зум по двойному тапу
+// Анти-зум по двойному тапу
 let lastTouchEnd=0;
 document.addEventListener('touchend',function(e){
   const now=Date.now();
