@@ -1,157 +1,101 @@
-/* ====== Базовые переменные (перекрываются из TG темой через JS) ====== */
-:root{
-  --bg: #f4f6fb;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #2563eb;
-  --primary-cta: #1e40af;
-  --card: #ffffff;
-  --border: #e5e7eb;
-  --shadow: 0 6px 20px rgba(2, 8, 23, .06);
+:root {
+  --bg: #121417;
+  --fg: #e9eef5;
+  --muted: #9aa6b2;
+  --card: #171a1f;
+  --stroke: #242931;
+  --accent: #4da3ff;
+  --btn: #2a3039;
+  --btn-fg: #e9eef5;
+  --btn-primary: #4da3ff;
+  --btn-primary-fg: #0b1220;
+  --shadow: 0 6px 24px rgba(0,0,0,.25);
   --radius: 16px;
-  --gap: 14px;
-  --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
 }
 
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0b0f19;
-    --text:#e5e7eb;
-    --muted:#94a3b8;
-    --primary:#60a5fa;
-    --primary-cta:#1d4ed8;
-    --card:#0f172a;
-    --border:#1f2937;
-    --shadow: 0 6px 20px rgba(0,0,0,.35);
-  }
-}
-
-*{ box-sizing:border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font: 15px/1.5 var(--font);
+/* Telegram тема */
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  padding: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ====== Контейнер ====== */
-.wrap{
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 20px 16px 28px;
+#app { max-width: 900px; margin: 0 auto; padding: 16px; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; border: 1px solid var(--stroke);
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
 }
 
-h1{
-  margin: 0 0 14px;
-  font-size: 26px;
-  letter-spacing: .2px;
-}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 28px; }
+.titles h1 { margin: 0; font-size: 18px; }
+.subtitle { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
 
-/* ====== Информация об окружении ====== */
-.env{
-  display:inline-block;
-  margin: 6px 0 18px;
-  padding: 8px 12px;
-  border-radius: 999px;
+.balances { display: flex; gap: 16px; }
+.balance { display: flex; flex-direction: column; align-items: flex-end; }
+.label { color: var(--muted); font-size: 11px; }
+.value { font-weight: 700; font-size: 16px; }
+
+.content { margin-top: 16px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tab {
+  padding: 10px 14px; border-radius: 12px; border: 1px solid var(--stroke);
+  background: var(--card); color: var(--fg); cursor: pointer;
+}
+.tab.active { outline: 2px solid var(--accent); }
+
+.tab-page { display: none; }
+.tab-page.active { display: block; }
+
+.card {
+  border: 1px solid var(--stroke);
   background: var(--card);
-  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
   box-shadow: var(--shadow);
-  color: var(--muted);
+  margin-bottom: 14px;
 }
-.env.ok{ color: #16a34a; border-color:#16a34a22; }
-.env.warn{ color:#f59e0b; border-color:#f59e0b22; }
+.card h2 { margin: 0 0 8px; font-size: 18px; }
+.muted { color: var(--muted); font-size: 13px; }
+.center { text-align: center; }
 
-/* ====== Секции ====== */
-section{ margin-bottom: 18px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-/* ====== Кнопки ====== */
-button{
-  appearance:none;
-  border:none;
-  outline:none;
-  cursor:pointer;
+.btn {
+  border: 1px solid var(--stroke);
+  background: var(--btn);
+  color: var(--btn-fg);
   border-radius: 12px;
   padding: 10px 14px;
-  font-weight: 600;
-  transition: transform .05s ease, background .2s ease, box-shadow .2s ease;
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(37,99,235,.25);
+  cursor: pointer;
 }
-button:active{ transform: translateY(1px) scale(.99); }
-button:disabled{ opacity:.45; cursor:not-allowed; }
-
-.free button{ background: var(--primary); }
-.free #free-left{ font-weight:700; }
-
-/* Кнопки сундуков — сетка */
-.chests{
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
-  gap: var(--gap);
-}
-.chests button{
-  width:100%;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, var(--primary), var(--primary-cta));
-  box-shadow: 0 10px 22px rgba(37,99,235,.28);
+.btn.primary {
+  background: var(--btn-primary);
+  color: var(--btn-primary-fg);
+  border: none;
 }
 
-/* ====== Select ====== */
-select{
-  background: var(--card);
-  color: var(--text);
-  border:1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-weight:600;
-  outline:none;
-  box-shadow: var(--shadow);
-}
-
-/* ====== Коллекция / карточки ====== */
-.collection{
+.grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--gap);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
-@media (min-width: 560px){
-  .collection{ grid-template-columns: 1fr 1fr; }
-}
-
-.card{
-  background: var(--card);
-  border:1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
-}
-.card .title{
-  font-size: 16px;
-  font-weight: 800;
-  margin: 0 0 6px;
-}
-.card .rarity{
-  font-size: 12px;
-  text-transform: lowercase;
-  color: var(--muted);
+@media (min-width: 560px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* Подсветка редкости */
-.card-common{ border-color:#93c5fd66; }
-.card-rare{ border-color:#a78bfa66; }
-.card-epic{ border-color:#f472b666; }
-.card-mythic{ border-color:#f59e0b66; }
-
-.empty{
-  padding: 18px;
-  border-radius: var(--radius);
-  background: var(--card);
-  border:1px dashed var(--border);
-  color: var(--muted);
-  text-align:center;
+.card-item {
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, #202633 0%, #151a24 100%);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
 }
+.card-item .title { font-weight: 700; }
+.card-item .rarity { color: var(--muted); font-size: 12px; }
